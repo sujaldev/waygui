@@ -1,0 +1,9 @@
+*.out
+build/
+
+# CLion
+.idea/
+
+# Python
+.venv/
+__py

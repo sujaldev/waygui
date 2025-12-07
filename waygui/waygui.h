@@ -1,0 +1,5 @@
+#ifndef WAYGUI_LIBRARY_H
+#define WAYGUI_LIBRARY_H
+
+
+#endif // WAYGUI_LIBRARY_H
