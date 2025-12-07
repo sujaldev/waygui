@@ -10,3 +10,7 @@ add_library(${PROJECT_NAME} SHARED waygui/waygui.c
 #target_compile_options(${PROJECT_NAME} PRIVATE "-fvisibility=hidden")
 install(FILES waygui/wire.h DESTINATION include/)
 
+# Examples
+add_executable(demo examples/demo.c)
+target_include_directories(demo PRIVATE ${PROJECT_NAME})
+target_link_libraries(demo PRIVATE ${PROJECT_NAME})
