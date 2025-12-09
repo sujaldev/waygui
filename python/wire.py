@@ -14,9 +14,6 @@ objects = [
     None,
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
 ]
-registry = {
-    "wl_display": 1
-}
 
 
 def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
@@ -74,23 +71,38 @@ def parse_response():
 
 
 def event_loop():
+    global recv_buffer
+
     setup_socket()
-    wl_display = objects[registry["wl_display"]]
+    wl_display = objects[1]
     write_request(wl_display, "get_registry", registry=len(objects))
 
-    while sock:
+    while True:
         flush()
 
         data = sock.recv(4096)
         data_len = len(data)
+        if data_len == 0:
+            break
+
         recv_buffer.write(data)
         recv_buffer.seek(-data_len, 1)
 
         while recv_buffer.tell() < data_len:
             parse_response()
 
+        del recv_buffer
+        recv_buffer = BytesIO()
+
     sock.close()
 
 
 if __name__ == "__main__":
-    event_loop()
+    try:
+        event_loop()
+    except KeyboardInterrupt:
+        pass
+    except Exception as e:
+        print(e)
+    finally:
+        sock.close()
