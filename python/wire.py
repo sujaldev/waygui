@@ -9,6 +9,9 @@ objects = [
     None,
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
 ]
+registry = {
+    "wl_display": 1
+}
 
 
 def build_request(wl_object: wl.WLObject, wl_request_name, **kwargs) -> bytes:
@@ -44,7 +47,8 @@ def setup_socket(name: str = None):
 
 def main():
     sock = setup_socket()
-    data = build_request(objects[1], "get_registry", registry=len(objects))
+    wl_display = objects[registry["wl_display"]]
+    data = build_request(wl_display, "get_registry", registry=len(objects))
 
     sock.send(data)
     response = sock.recv(4096)
