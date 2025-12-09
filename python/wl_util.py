@@ -2,6 +2,7 @@ import sys
 import struct
 from dataclasses import dataclass
 from io import BytesIO
+from typing import Dict, List, Optional
 
 
 class WLPrimitive:
@@ -60,8 +61,46 @@ class String(WLPrimitive):
 
 
 @dataclass
+class WLObject:
+    obj_id: ObjID
+    name: str
+    interface: "WLInterface"
+
+
+@dataclass
+class WLInterface:
+    name: str
+    version: int
+    requests: Dict[str, "WLFuncs"]
+    events: List["WLFuncs"]
+
+
+@dataclass
+class WLFuncs:
+    opcode: int
+    name: str
+    args: List["WLArgument"]
+    type_: str = None
+
+
+class WLRequest(WLFuncs):
+    pass
+
+
+class WLEvent(WLFuncs):
+    pass
+
+
+@dataclass
+class WLArgument:
+    name: str
+    type_: WLPrimitive
+    new_interface: Optional[str]
+
+
+@dataclass
 class Header:
-    obj_id: int
+    obj_id: ObjID
     opcode: int
     size: int = 0
 
@@ -73,13 +112,14 @@ class Header:
         else:
             obj_id, size, opcode = struct.unpack(">IHH", data)
 
-        return Header(obj_id, opcode, size)
+        return Header(ObjID(obj_id), opcode, size)
 
     def serialize(self) -> bytes:
+        obj_id = self.obj_id.serialize()
         if sys.byteorder == "little":
-            return struct.pack("<IHH", self.obj_id, self.opcode, self.size)
+            return obj_id + struct.pack("<HH", self.opcode, self.size)
         else:
-            return struct.pack(">IHH", self.obj_id, self.size, self.opcode)
+            return struct.pack(">HH", self.size, self.opcode)
 
 
 @dataclass
