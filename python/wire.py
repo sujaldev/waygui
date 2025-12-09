@@ -2,23 +2,30 @@ import os
 import socket
 from io import BytesIO
 
-import wl_primitives as wl
+import wl_util as wl
+
+interface = wl.build_interface()
+objects = [
+    None,
+    wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
+]
 
 
-def wl_display_get_registry(sock: socket.socket) -> BytesIO:
-    msg = wl.Message(
-        wl.Header(
-            obj_id=1,  # wl_display is implicitly assumed to be object id 1
-            opcode=1,  # wl_display::get_registry(newId)
-        ),
-        [wl.NewID(2)]
-    ).serialize()
+def build_request(wl_object: wl.WLObject, wl_request_name, **kwargs) -> bytes:
+    request = wl_object.interface.requests[wl_request_name]
+    header = wl.Header(wl_object.obj_id, request.opcode)
+    args = []
+    for arg in request.args:
+        arg_obj = arg.type_(kwargs[arg.name])
+        if arg.type_ == wl.NewID:
+            new_id = kwargs[arg.name]
+            new_obj = wl.WLObject(new_id, arg.new_interface, interface[arg.new_interface])
+            objects.insert(new_id, new_obj)
 
-    sock.send(msg)
+        args.append(arg_obj)
 
-    data = sock.recv(4096)
-
-    return BytesIO(data)
+    message = wl.Message(header, args)
+    return message.serialize()
 
 
 def setup_socket(name: str = None):
@@ -37,9 +44,11 @@ def setup_socket(name: str = None):
 
 def main():
     sock = setup_socket()
-    data = wl_display_get_registry(sock)
+    data = build_request(objects[1], "get_registry", registry=len(objects))
 
-    header = wl.Header.frombytes(data)
+    sock.send(data)
+    response = sock.recv(4096)
+    print(response)
     sock.close()
 
 
