@@ -1,8 +1,13 @@
 import os
 import socket
 from io import BytesIO
+from typing import Optional
 
 import wl_util as wl
+
+sock: Optional[socket.socket] = None
+send_buffer = bytes()
+recv_buffer = BytesIO()
 
 interface = wl.build_interface()
 objects = [
@@ -14,7 +19,9 @@ registry = {
 }
 
 
-def build_request(wl_object: wl.WLObject, wl_request_name, **kwargs) -> bytes:
+def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
+    global send_buffer
+
     request = wl_object.interface.requests[wl_request_name]
     header = wl.Header(wl_object.obj_id, request.opcode)
     args = []
@@ -28,10 +35,12 @@ def build_request(wl_object: wl.WLObject, wl_request_name, **kwargs) -> bytes:
         args.append(arg_obj)
 
     message = wl.Message(header, args)
-    return message.serialize()
+
+    send_buffer += message.serialize()
 
 
 def setup_socket(name: str = None):
+    global sock
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
 
     if name is None:
@@ -42,19 +51,46 @@ def setup_socket(name: str = None):
         name = f"{xdg_runtime_dir}/{name}"
 
     sock.connect(name)
-    return sock
 
 
-def main():
-    sock = setup_socket()
+def flush():
+    global sock
+    global send_buffer
+
+    if send_buffer:
+        sock.send(send_buffer)
+        send_buffer = bytes()
+
+
+def parse_response():
+    global recv_buffer
+
+    header = wl.Header.frombytes(recv_buffer)
+    obj = objects[header.obj_id.value]
+    print(header)
+    for arg in obj.interface.events[header.opcode].args:
+        print(arg.type_.frombytes(recv_buffer))
+    print("\n")
+
+
+def event_loop():
+    setup_socket()
     wl_display = objects[registry["wl_display"]]
-    data = build_request(wl_display, "get_registry", registry=len(objects))
+    write_request(wl_display, "get_registry", registry=len(objects))
 
-    sock.send(data)
-    response = sock.recv(4096)
-    print(response)
+    while sock:
+        flush()
+
+        data = sock.recv(4096)
+        data_len = len(data)
+        recv_buffer.write(data)
+        recv_buffer.seek(-data_len, 1)
+
+        while recv_buffer.tell() < data_len:
+            parse_response()
+
     sock.close()
 
 
 if __name__ == "__main__":
-    main()
+    event_loop()
