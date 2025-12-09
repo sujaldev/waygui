@@ -1,8 +1,8 @@
 import sys
 import struct
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from io import BytesIO
-from typing import Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 from xml.etree import ElementTree
 
 
@@ -84,14 +84,16 @@ class WLObject:
     obj_id: ObjID
     name: str
     interface: "WLInterface"
+    # indices in this list are used to match events to callbacks
+    callbacks: Optional[List[Callable]] = field(default_factory=lambda: {})
 
 
 @dataclass
 class WLInterface:
     name: str
     version: int
-    requests: Dict[str, "WLFuncs"]
-    events: List["WLFuncs"]
+    requests: Dict[Union[str, int], "WLFuncs"]
+    events: Dict[Union[str, int], "WLFuncs"]
 
 
 @dataclass
@@ -179,7 +181,7 @@ def build_interface(path="/usr/share/wayland/wayland.xml"):
         interface_obj = WLInterface(
             name,
             int(interface_tag.attrib["version"]),
-            {}, []
+            {}, {}
         )
 
         for opcode, request_tag in enumerate(interface_tag.iter("request")):
@@ -201,11 +203,12 @@ def build_interface(path="/usr/share/wayland/wayland.xml"):
                 request_obj.args.append(arg_obj)
 
             interface_obj.requests[req_name] = request_obj
+            interface_obj.requests[opcode] = request_obj
 
         for opcode, event_tag in enumerate(interface_tag.iter("event")):
             event_obj = WLEvent(
                 opcode,
-                event_tag.attrib["name"],
+                (event_name := event_tag.attrib["name"]),
                 [],
                 type_=event_tag.attrib.get("type", None)
             )
@@ -220,7 +223,8 @@ def build_interface(path="/usr/share/wayland/wayland.xml"):
 
                 event_obj.args.append(arg_obj)
 
-            interface_obj.events.append(event_obj)
+            interface_obj.events[event_name] = event_obj
+            interface_obj.events[opcode] = event_obj
 
         interface[name] = interface_obj
 

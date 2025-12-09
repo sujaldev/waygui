@@ -1,7 +1,7 @@
 import os
 import socket
 from io import BytesIO
-from typing import Optional
+from typing import Dict, Optional
 
 import wl_util as wl
 
@@ -14,6 +14,8 @@ objects = [
     None,
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
 ]
+
+global_objs: Dict[int, str] = {}
 
 
 def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
@@ -64,10 +66,16 @@ def parse_response():
 
     header = wl.Header.frombytes(recv_buffer)
     obj = objects[header.obj_id.value]
-    print(header)
+    kwarg_list = {}
     for arg in obj.interface.events[header.opcode].args:
-        print(arg.type_.frombytes(recv_buffer))
+        kwarg_list[arg.name] = arg.type_.frombytes(recv_buffer)
+    obj.callbacks[header.opcode](**kwarg_list)
     print("\n")
+
+
+def wl_registry_global_event(**kwargs):
+    name, _interface, version = kwargs.values()
+    global_objs[name.value] = _interface.value
 
 
 def event_loop():
@@ -76,6 +84,8 @@ def event_loop():
     setup_socket()
     wl_display = objects[1]
     write_request(wl_display, "get_registry", registry=len(objects))
+    wl_registry = objects[2]
+    wl_registry.callbacks[wl_registry.interface.events["global"].opcode] = wl_registry_global_event
 
     while True:
         flush()
