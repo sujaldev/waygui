@@ -6,4 +6,4 @@ build/
 
 # Python
 .venv/
-__py
+__pycache__/
