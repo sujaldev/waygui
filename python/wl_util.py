@@ -10,6 +10,10 @@ class WLPrimitive:
     """Base class for wayland primitive types."""
     pass
 
+    @staticmethod
+    def frombytes(data: BytesIO) -> "WLPrimitive":
+        pass
+
     def serialize(self) -> bytes:
         pass
 
@@ -18,6 +22,10 @@ class WLPrimitive:
 class UInt32(WLPrimitive):
     value: int
 
+    @staticmethod
+    def frombytes(data: BytesIO) -> "UInt32":
+        return UInt32(struct.unpack("=I", data.read(4))[0])
+
     def serialize(self) -> bytes:
         return struct.pack("=I", self.value)
 
@@ -25,6 +33,10 @@ class UInt32(WLPrimitive):
 @dataclass
 class Int32(WLPrimitive):
     value: int
+
+    @staticmethod
+    def frombytes(data: BytesIO) -> "Int32":
+        return Int32(struct.unpack("=i", data.read(4))[0])
 
     def serialize(self) -> bytes:
         return struct.pack("=i", self.value)
@@ -45,16 +57,22 @@ class String(WLPrimitive):
     value: str
 
     @staticmethod
+    def padding(size: int) -> int:
+        return (4 - (size % 4)) % 4
+
+    @staticmethod
     def frombytes(data: BytesIO) -> "String":
-        length = data.read()
-        return String()
+        length = UInt32.frombytes(data).value
+        value = data.read(length - 1)
+        data.read(1 + String.padding(length))  # discard padding (if any exists)
+        return String(value.decode("utf8"))
 
     def serialize(self) -> bytes:
         value = bytes(self.value, "utf8")
         value += b"\0"  # NULL terminator
 
         size = len(value)
-        padding = (32 - (size % 32)) % 32
+        padding = String.padding(size)
         value += b"\0" * padding
         size += padding
 
