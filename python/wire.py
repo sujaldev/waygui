@@ -2,6 +2,7 @@ import array
 import os
 import mmap
 import socket
+from functools import partial
 from io import BytesIO
 from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, Iterable, Optional
@@ -11,6 +12,8 @@ import wl_util as wl
 WIDTH, HEIGHT = 500, 500
 STRIDE = WIDTH * 4
 POOL_SIZE = STRIDE * HEIGHT * 2  # Double Buffering
+
+WINDOW_TITLE = "WayGUI"
 
 sock: Optional[socket.socket] = None
 shm: Optional[SharedMemory] = None
@@ -138,6 +141,16 @@ def wl_display_error(**kwargs):
     )
 
 
+def xdg_wm_base_pong(xdg_wm_base: wl.WLObject, serial: wl.UInt32):
+    global send_buffer
+
+    write_request(
+        xdg_wm_base, "pong",
+        serial=serial.value
+    )
+    flush()
+
+
 def create_shared_memory():
     # Create shared memory for a surface of size `width * height` assuming XRGB8888 format and double buffering.
     global shm
@@ -157,7 +170,7 @@ def main():
 
     setup_socket()
     wl_display = objects[1]
-    wl_display.callbacks[wl_display.interface.events["error"].opcode] = wl_display_error
+    wl_display.set_callback("error", wl_display_error)
     write_request(wl_display, "get_registry", registry=len(objects))
     wl_registry = objects[2]
     wl_registry.callbacks[wl_registry.interface.events["global"].opcode] = wl_registry_global_event
@@ -175,7 +188,104 @@ def main():
     wl_compositor = objects[new_id]
     print(wl_compositor)
 
+    # wl_registry::bind("wl_shm", "wl_shm", 6, new_id)
+    write_request(
+        wl_registry, "bind",
+        name=global_objs["wl_shm"]["name"],
+        new_interface_name="wl_shm",
+        new_interface_version=global_objs["wl_shm"]["version"],
+        id=(new_id := len(objects))
+    )
+    wl_shm = objects[new_id]
+    wl_shm.set_callback("format", lambda **kwargs: None)  # we assume format to be 0x01 (xrgb8888)
+
+    # wl_registry::bind("xdg_wm_base", "xdg_wm_base", 6, new_id)
+    write_request(
+        wl_registry, "bind",
+        name=global_objs["xdg_wm_base"]["name"],
+        new_interface_name="xdg_wm_base",
+        new_interface_version=global_objs["xdg_wm_base"]["version"],
+        id=(new_id := len(objects))
+    )
+    xdg_wm_base = objects[new_id]
+    xdg_wm_base.set_callback("ping", partial(xdg_wm_base_pong, xdg_wm_base))
+
     flush()
+
+    # wl_compositor::create_surface(new_id)
+    write_request(
+        wl_compositor, "create_surface",
+        id=(new_id := len(objects))
+    )
+    wl_surface = objects[new_id]
+    wl_surface.set_callback('preferred_buffer_scale')
+    wl_surface.set_callback('preferred_buffer_transform')
+
+    # xdg_wm_base::get_xdg_surface(new_id, surface=wl_surface)
+    write_request(
+        xdg_wm_base, "get_xdg_surface",
+        id=(new_id := len(objects)),
+        surface=wl_surface.obj_id.value
+    )
+    xdg_surface = objects[new_id]
+    xdg_surface.set_callback("configure")
+
+    # xdg_surface::get_toplevel(new_id)
+    write_request(
+        xdg_surface, "get_toplevel",
+        id=(new_id := len(objects)),
+    )
+    xdg_toplevel = objects[new_id]
+    xdg_toplevel.set_callback("wm_capabilities")
+    xdg_toplevel.set_callback("configure_bounds")
+    xdg_toplevel.set_callback("configure")
+
+    # xdg_toplevel::set_title("WayGUI")
+    write_request(
+        xdg_toplevel, "set_title",
+        title=WINDOW_TITLE
+    )
+
+    # wl_surface::commit()
+    write_request(wl_surface, "commit")
+
+    flush()
+
+    # wl_shm::create_pool(new_id, fd=0, size=500x500x4x2)
+    create_shared_memory()
+    write_request(
+        wl_shm, "create_pool",
+        id=(new_id := len(objects)),
+        fd=0,
+        size=POOL_SIZE,
+    )
+    wl_shm_pool = objects[new_id]
+
+    # wl_shm_pool::create_buffer(new_id, offset=0, width=500, height=500, stride=500*4, format=xrgb8888)
+    write_request(
+        wl_shm_pool, "create_buffer",
+        id=(new_id := len(objects)),
+        offset=0,
+        width=WIDTH,
+        height=HEIGHT,
+        stride=STRIDE,
+        format=1,  # xrgb8888
+    )
+    wl_buffer = objects[new_id]
+
+    # wl_surface::attach(buffer=wl_buffer, x=0, y=0)
+    write_request(
+        wl_surface, "attach",
+        buffer=wl_buffer.obj_id.value,
+        x=0,
+        y=0
+    )
+
+    # wl_surface::commit()
+    write_request(wl_surface, "commit")
+
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    flush([shm._fd])
 
     sock.close()
 
@@ -187,3 +297,6 @@ if __name__ == "__main__":
         pass
     finally:
         sock.close()
+        pool_data.close()
+        shm.unlink()
+        shm.close()
