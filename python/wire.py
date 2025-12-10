@@ -15,7 +15,7 @@ objects = [
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
 ]
 
-global_objs: Dict[int, str] = {}
+global_objs: Dict[str, int] = {}
 
 
 def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
@@ -28,7 +28,12 @@ def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
         arg_obj = arg.type_(kwargs[arg.name])
         if arg.type_ == wl.NewID:
             new_id = kwargs[arg.name]
-            new_obj = wl.WLObject(new_id, arg.new_interface, interface[arg.new_interface])
+            if arg.new_interface is None:
+                preceding_interface_string = args[-2].value
+                new_interface = interface[preceding_interface_string]
+            else:
+                new_interface = interface[arg.new_interface]
+            new_obj = wl.WLObject(wl.ObjID(new_id), new_interface.name, new_interface)
             objects.insert(new_id, new_obj)
 
         args.append(arg_obj)

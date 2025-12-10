@@ -119,7 +119,7 @@ class WLEvent(WLFuncs):
 class WLArgument:
     name: str
     type_: WLPrimitive
-    new_interface: Optional[str]
+    new_interface: Optional[str] = None
 
 
 @dataclass
@@ -202,6 +202,10 @@ def build_interface(path="/usr/share/wayland/wayland.xml"):
                     arg_map[arg_tag.attrib["type"]],
                     arg_tag.attrib.get("interface", None)
                 )
+
+                if arg_obj.type_ == NewID and arg_obj.new_interface is None:
+                    request_obj.args.append(WLArgument("new_interface_name", String))
+                    request_obj.args.append(WLArgument("new_interface_version", UInt32))
 
                 request_obj.args.append(arg_obj)
 
