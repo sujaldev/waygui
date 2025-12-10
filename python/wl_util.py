@@ -6,6 +6,10 @@ from typing import Callable, Dict, List, Optional, Union
 from xml.etree import ElementTree
 
 
+def padding(size: int) -> int:
+    return (4 - (size % 4)) % 4
+
+
 class WLPrimitive:
     """Base class for wayland primitive types."""
     pass
@@ -57,14 +61,10 @@ class String(WLPrimitive):
     value: str
 
     @staticmethod
-    def padding(size: int) -> int:
-        return (4 - (size % 4)) % 4
-
-    @staticmethod
     def frombytes(data: BytesIO) -> "String":
         length = UInt32.frombytes(data).value
         value = data.read(length - 1)
-        data.read(1 + String.padding(length))  # discard padding (if any exists)
+        data.read(1 + padding(length))  # discard padding (if any exists)
         return String(value.decode("utf8"))
 
     def serialize(self) -> bytes:
@@ -72,10 +72,45 @@ class String(WLPrimitive):
         value += b"\0"  # NULL terminator
 
         size = len(value)
-        padding = String.padding(size)
-        value += b"\0" * padding
+        value += b"\0" * padding(size)
 
         return struct.pack("=I", size) + value
+
+
+class Fd(UInt32):
+    """
+    The file descriptor is not stored in the message buffer,
+    but in the ancillary data of the UNIX domain socket message (msg_control).
+    """
+    value = 0  # Does not matter what value we store here, this class is just to declare a fd type.
+
+    def serialize(self) -> bytes:
+        # The file descriptor is sent via ancillary data,
+        # it does not serialize to actual bytes in the wire format.
+        return b""
+
+
+@dataclass
+class Array(WLPrimitive):
+    """
+    Starts with 32-bit array size in bytes,
+    followed by the array contents verbatim,
+    and finally padding to a 32-bit boundary.
+    """
+    size: int
+    data: bytes
+
+    @staticmethod
+    def frombytes(data: BytesIO) -> "WLPrimitive":
+        size = UInt32.frombytes(data).value
+        array = data.read(size)
+        data.read(padding(size))  # discard padding (if any exists)
+        return Array(size, array)
+
+    def serialize(self) -> bytes:
+        data = UInt32(self.size).serialize() + self.data
+        data += b"\0" * padding(len(data))
+        return data
 
 
 @dataclass
@@ -174,8 +209,8 @@ def build_interface(path="/usr/share/wayland/wayland.xml"):
         "object": ObjID,
         "new_id": NewID,
         "string": String,
-        "fd": "fd",
-        "array": "array",
+        "fd": Fd,
+        "array": Array,
     }
 
     for interface_tag in xml.getroot().iter("interface"):
