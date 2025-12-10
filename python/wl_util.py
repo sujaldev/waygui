@@ -172,8 +172,12 @@ class Header:
     size: int = 0
 
     @staticmethod
-    def frombytes(data: BytesIO) -> "Header":
+    def frombytes(data: BytesIO) -> Optional["Header"]:
         data = data.read(8)
+
+        if not data:
+            return None
+
         if sys.byteorder == "little":
             obj_id, opcode, size = struct.unpack("<IHH", data)
         else:

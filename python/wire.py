@@ -69,7 +69,13 @@ def flush():
         del send_buffer
         send_buffer = bytes()
 
-    data = sock.recv(4096)
+    try:
+        data = sock.recv(4096)
+    except socket.timeout:
+        del recv_buffer
+        recv_buffer = BytesIO()
+        return
+
     data_len = len(data)
     if data_len == 0:
         return
@@ -88,6 +94,8 @@ def parse_response():
     global recv_buffer
 
     header = wl.Header.frombytes(recv_buffer)
+    if not header:
+        return
     obj = objects[header.obj_id.value]
     kwarg_list = {}
     for arg in obj.interface.events[header.opcode].args:
