@@ -89,7 +89,13 @@ def parse_response():
     kwarg_list = {}
     for arg in obj.interface.events[header.opcode].args:
         kwarg_list[arg.name] = arg.type_.frombytes(recv_buffer)
-    obj.callbacks[header.opcode](**kwarg_list)
+    try:
+        obj.callbacks[header.opcode](**kwarg_list)
+    except KeyError:
+        missing_callback_name = obj.interface.events[header.opcode].name
+        raise Exception(
+            f"Missing {missing_callback_name!r} callback for object {obj.name!r}"
+        )
 
 
 def wl_registry_global_event(**kwargs):
