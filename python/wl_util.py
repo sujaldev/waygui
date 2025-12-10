@@ -74,7 +74,6 @@ class String(WLPrimitive):
         size = len(value)
         padding = String.padding(size)
         value += b"\0" * padding
-        size += padding
 
         return struct.pack("=I", size) + value
 
