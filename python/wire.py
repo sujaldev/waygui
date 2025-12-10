@@ -1,7 +1,8 @@
+import array
 import os
 import socket
 from io import BytesIO
-from typing import Dict, Optional
+from typing import Dict, Iterable, Optional
 
 import wl_util as wl
 
@@ -60,12 +61,18 @@ def setup_socket(name: str = None):
     sock.connect(name)
 
 
-def flush():
+def flush(fds: Iterable = None):
     global send_buffer
     global recv_buffer
 
     if send_buffer:
-        sock.send(send_buffer)
+        if fds is None:
+            sock.send(send_buffer)
+        else:
+            sock.sendmsg(
+                [send_buffer],
+                [(socket.SOL_SOCKET, socket.SCM_RIGHTS, array.array("i", fds))]
+            )
         del send_buffer
         send_buffer = bytes()
 
