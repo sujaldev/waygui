@@ -85,7 +85,10 @@ class WLObject:
     name: str
     interface: "WLInterface"
     # indices in this list are used to match events to callbacks
-    callbacks: Optional[List[Callable]] = field(default_factory=lambda: {})
+    callbacks: Optional[Dict[int, Callable]] = field(default_factory=lambda: {})
+
+    def __repr__(self):
+        return f"WLObject({self.obj_id.value}, {self.name})"
 
 
 @dataclass
