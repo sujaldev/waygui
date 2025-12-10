@@ -96,12 +96,18 @@ def wl_registry_global_event(**kwargs):
     name, _interface, version = kwargs.values()
     global_objs[_interface.value] = name.value
 
+def wl_display_error(**kwargs):
+    raise Exception(
+        f"error {kwargs['code'].value} {objects[kwargs['object_id'].value]}: {kwargs['message'].value}"
+    )
+
 
 def main():
     global recv_buffer
 
     setup_socket()
     wl_display = objects[1]
+    wl_display.callbacks[wl_display.interface.events["error"].opcode] = wl_display_error
     write_request(wl_display, "get_registry", registry=len(objects))
     wl_registry = objects[2]
     wl_registry.callbacks[wl_registry.interface.events["global"].opcode] = wl_registry_global_event
