@@ -46,6 +46,7 @@ def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
 def setup_socket(name: str = None):
     global sock
     sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
+    sock.settimeout(2.0)
 
     if name is None:
         name = os.getenv("WAYLAND_DISPLAY", default="wayland-0")
