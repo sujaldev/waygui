@@ -10,6 +10,8 @@ send_buffer = bytes()
 recv_buffer = BytesIO()
 
 interface = wl.build_interface()
+xdg_interface = wl.build_interface(path="/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml")
+interface.update(xdg_interface)
 objects = [
     None,
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
