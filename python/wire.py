@@ -58,12 +58,27 @@ def setup_socket(name: str = None):
 
 
 def flush():
-    global sock
     global send_buffer
+    global recv_buffer
 
     if send_buffer:
         sock.send(send_buffer)
+        del send_buffer
         send_buffer = bytes()
+
+    data = sock.recv(4096)
+    data_len = len(data)
+    if data_len == 0:
+        return
+
+    recv_buffer.write(data)
+    recv_buffer.seek(-data_len, 1)
+
+    while recv_buffer.tell() < data_len:
+        parse_response()
+
+    del recv_buffer
+    recv_buffer = BytesIO()
 
 
 def parse_response():
@@ -75,15 +90,14 @@ def parse_response():
     for arg in obj.interface.events[header.opcode].args:
         kwarg_list[arg.name] = arg.type_.frombytes(recv_buffer)
     obj.callbacks[header.opcode](**kwarg_list)
-    print("\n")
 
 
 def wl_registry_global_event(**kwargs):
     name, _interface, version = kwargs.values()
-    global_objs[name.value] = _interface.value
+    global_objs[_interface.value] = name.value
 
 
-def event_loop():
+def main():
     global recv_buffer
 
     setup_socket()
@@ -92,32 +106,15 @@ def event_loop():
     wl_registry = objects[2]
     wl_registry.callbacks[wl_registry.interface.events["global"].opcode] = wl_registry_global_event
 
-    while True:
-        flush()
-
-        data = sock.recv(4096)
-        data_len = len(data)
-        if data_len == 0:
-            break
-
-        recv_buffer.write(data)
-        recv_buffer.seek(-data_len, 1)
-
-        while recv_buffer.tell() < data_len:
-            parse_response()
-
-        del recv_buffer
-        recv_buffer = BytesIO()
+    flush()
 
     sock.close()
 
 
 if __name__ == "__main__":
     try:
-        event_loop()
+        main()
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        print(e)
     finally:
         sock.close()
