@@ -1,6 +1,7 @@
 import sys
 import struct
 from dataclasses import dataclass, field
+from functools import partial
 from io import BytesIO
 from typing import Callable, Dict, List, Optional, Union
 from xml.etree import ElementTree
@@ -120,6 +121,14 @@ class WLObject:
     interface: "WLInterface"
     # indices in this list are used to match events to callbacks
     callbacks: Optional[Dict[int, Callable]] = field(default_factory=lambda: {})
+
+    def default_callback(self, event_name: str, **kwargs):
+        print(f"{self.name}::{event_name} -> {kwargs}")
+
+    def set_callback(self, event: str, func: Callable = None):
+        if func is None:
+            func = partial(self.default_callback, event)
+        self.callbacks[self.interface.events[event].opcode] = func
 
     def __repr__(self):
         return f"WLObject({self.obj_id.value}, {self.name})"
