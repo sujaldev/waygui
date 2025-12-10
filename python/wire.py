@@ -1,12 +1,20 @@
 import array
 import os
+import mmap
 import socket
 from io import BytesIO
+from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, Iterable, Optional
 
 import wl_util as wl
 
+WIDTH, HEIGHT = 500, 500
+STRIDE = WIDTH * 4
+POOL_SIZE = STRIDE * HEIGHT * 2  # Double Buffering
+
 sock: Optional[socket.socket] = None
+shm: Optional[SharedMemory] = None
+pool_data: Optional[mmap.mmap] = None
 send_buffer = bytes()
 recv_buffer = BytesIO()
 
@@ -127,6 +135,20 @@ def wl_registry_global_event(**kwargs):
 def wl_display_error(**kwargs):
     raise Exception(
         f"error {kwargs['code'].value} {objects[kwargs['object_id'].value]}: {kwargs['message'].value}"
+    )
+
+
+def create_shared_memory():
+    # Create shared memory for a surface of size `width * height` assuming XRGB8888 format and double buffering.
+    global shm
+    global pool_data
+
+    shm = SharedMemory(create=True, size=POOL_SIZE)
+    # noinspection PyUnresolvedReferences,PyProtectedMember
+    pool_data = mmap.mmap(
+        shm._fd, POOL_SIZE,
+        prot=mmap.PROT_READ | mmap.PROT_WRITE,
+        flags=mmap.MAP_SHARED
     )
 
 
