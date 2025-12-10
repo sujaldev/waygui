@@ -15,7 +15,7 @@ objects = [
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
 ]
 
-global_objs: Dict[str, int] = {}
+global_objs: Dict[str, Dict[str, int]] = {}
 
 
 def write_request(wl_object: wl.WLObject, wl_request_name, **kwargs):
@@ -94,7 +94,11 @@ def parse_response():
 
 def wl_registry_global_event(**kwargs):
     name, _interface, version = kwargs.values()
-    global_objs[_interface.value] = name.value
+    global_objs[_interface.value] = {
+        "name": name.value,
+        "version": version.value,
+    }
+
 
 def wl_display_error(**kwargs):
     raise Exception(
@@ -111,6 +115,19 @@ def main():
     write_request(wl_display, "get_registry", registry=len(objects))
     wl_registry = objects[2]
     wl_registry.callbacks[wl_registry.interface.events["global"].opcode] = wl_registry_global_event
+
+    flush()
+
+    # wl_registry::bind("wl_compositor", 3)
+    write_request(
+        wl_registry, "bind",
+        name=global_objs["wl_compositor"]["name"],
+        new_interface_name="wl_compositor",
+        new_interface_version=global_objs["wl_compositor"]["version"],
+        id=(new_id := len(objects))
+    )
+    wl_compositor = objects[new_id]
+    print(wl_compositor)
 
     flush()
 
