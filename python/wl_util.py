@@ -11,9 +11,12 @@ def padding(size: int) -> int:
     return (4 - (size % 4)) % 4
 
 
+@dataclass
 class WLPrimitive:
     """Base class for wayland primitive types."""
-    pass
+
+    def __init__(self, *args, **kwargs):
+        pass
 
     @staticmethod
     def frombytes(data: BytesIO) -> "WLPrimitive":
@@ -161,7 +164,7 @@ class WLEvent(WLFuncs):
 @dataclass
 class WLArgument:
     name: str
-    type_: WLPrimitive
+    type_: type[WLPrimitive]
     new_interface: Optional[str] = None
 
 

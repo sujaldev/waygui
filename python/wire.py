@@ -186,7 +186,6 @@ def main():
         id=(new_id := len(objects))
     )
     wl_compositor = objects[new_id]
-    print(wl_compositor)
 
     # wl_registry::bind("wl_shm", "wl_shm", 6, new_id)
     write_request(
