@@ -185,6 +185,23 @@ def create_shared_memory():
         flags=mmap.MAP_SHARED
     )
 
+    # Draw checker pattern
+    block_size = 63
+    for y in range(HEIGHT):
+        for x in range(WIDTH):
+            offset = (STRIDE * y) + (x * 4)
+            pool_data[offset + 3] = 0xFF  # Alpha
+
+            row_inverter = (y // block_size % 2)
+            if ((x // block_size) % 2) ^ row_inverter:
+                pool_data[offset + 2] = 0x00  # Red
+                pool_data[offset + 1] = 0x00  # Green
+                pool_data[offset] = 0x00  # Blue
+            else:
+                pool_data[offset + 2] = 0xFF
+                pool_data[offset + 1] = 0xFF
+                pool_data[offset] = 0xFF
+
 
 def main():
     global recv_buffer
