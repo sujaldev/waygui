@@ -15,6 +15,8 @@ POOL_SIZE = STRIDE * HEIGHT * 2  # Double Buffering
 
 WINDOW_TITLE = "WayGUI"
 
+RUNNING = True
+
 sock: Optional[socket.socket] = None
 shm: Optional[SharedMemory] = None
 pool_data: Optional[mmap.mmap] = None
@@ -148,7 +150,11 @@ def xdg_wm_base_pong(xdg_wm_base: wl.WLObject, serial: wl.UInt32):
         xdg_wm_base, "pong",
         serial=serial.value
     )
-    flush()
+
+
+def stop():
+    global RUNNING
+    RUNNING = False
 
 
 def create_shared_memory():
@@ -238,6 +244,7 @@ def main():
     xdg_toplevel.set_callback("wm_capabilities")
     xdg_toplevel.set_callback("configure_bounds")
     xdg_toplevel.set_callback("configure")
+    xdg_toplevel.set_callback("close", stop)
 
     # xdg_toplevel::set_title("WayGUI")
     write_request(
@@ -285,6 +292,9 @@ def main():
 
     # noinspection PyUnresolvedReferences,PyProtectedMember
     flush([shm._fd])
+
+    while RUNNING:
+        flush()
 
     sock.close()
 
