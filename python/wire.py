@@ -27,6 +27,10 @@ recv_buffer = BytesIO()
 interface = wl.build_interface()
 xdg_interface = wl.build_interface(path="/usr/share/wayland-protocols/stable/xdg-shell/xdg-shell.xml")
 interface.update(xdg_interface)
+zxdg_decoration_v1 = wl.build_interface(
+    path="/usr/share/wayland-protocols/unstable/xdg-decoration/xdg-decoration-unstable-v1.xml"
+)
+interface.update(zxdg_decoration_v1)
 objects = [
     None,
     wl.WLObject(wl.ObjID(1), "wl_display", interface["wl_display"])
@@ -247,6 +251,16 @@ def main():
     xdg_wm_base = objects[new_id]
     xdg_wm_base.set_callback("ping", partial(xdg_wm_base_pong, xdg_wm_base))
 
+    # wl_registry::bind("zxdg_decoration_manager_v1", "zxdg_decoration_manager_v1", 1, new_id)
+    write_request(
+        wl_registry, "bind",
+        name=global_objs["zxdg_decoration_manager_v1"]["name"],
+        new_interface_name="zxdg_decoration_manager_v1",
+        new_interface_version=global_objs["zxdg_decoration_manager_v1"]["version"],
+        id=(new_id := len(objects))
+    )
+    xdg_decoration = objects[new_id]
+
     flush()
 
     # wl_compositor::create_surface(new_id)
@@ -277,6 +291,15 @@ def main():
     xdg_toplevel.set_callback("configure_bounds", configure_bounds)
     xdg_toplevel.set_callback("configure")
     xdg_toplevel.set_callback("close", stop)
+
+    # zxdg_decoration_manager_v1::get_toplevel_decoration(new_id, toplevel)
+    write_request(
+        xdg_decoration, "get_toplevel_decoration",
+        id=(new_id := len(objects)),
+        toplevel=xdg_toplevel.obj_id.value,
+    )
+    xdg_toplevel_decoration = objects[new_id]
+    xdg_toplevel_decoration.set_callback("configure")
 
     # xdg_toplevel::set_title("WayGUI")
     write_request(
