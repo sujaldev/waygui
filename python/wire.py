@@ -10,6 +10,7 @@ from typing import Dict, Iterable, Optional
 import wl_util as wl
 
 WIDTH, HEIGHT = 500, 500
+MAX_WIDTH, MAX_HEIGHT = 0, 0
 STRIDE = WIDTH * 4
 POOL_SIZE = STRIDE * HEIGHT * 2  # Double Buffering
 
@@ -152,6 +153,20 @@ def xdg_wm_base_pong(xdg_wm_base: wl.WLObject, serial: wl.UInt32):
     )
 
 
+def configure_bounds(**kwargs):
+    global MAX_WIDTH, MAX_HEIGHT
+    MAX_WIDTH = kwargs["width"].value
+    MAX_HEIGHT = kwargs["height"].value
+    print(f"Max bounds configured to {MAX_WIDTH}*{MAX_HEIGHT}.")
+
+
+def ack_configure(xdg_surface, serial: wl.UInt32):
+    write_request(
+        xdg_surface, "ack_configure",
+        serial=serial.value
+    )
+
+
 def stop():
     global RUNNING
     RUNNING = False
@@ -233,7 +248,7 @@ def main():
         surface=wl_surface.obj_id.value
     )
     xdg_surface = objects[new_id]
-    xdg_surface.set_callback("configure")
+    xdg_surface.set_callback("configure", partial(ack_configure, xdg_surface))
 
     # xdg_surface::get_toplevel(new_id)
     write_request(
@@ -242,7 +257,7 @@ def main():
     )
     xdg_toplevel = objects[new_id]
     xdg_toplevel.set_callback("wm_capabilities")
-    xdg_toplevel.set_callback("configure_bounds")
+    xdg_toplevel.set_callback("configure_bounds", configure_bounds)
     xdg_toplevel.set_callback("configure")
     xdg_toplevel.set_callback("close", stop)
 
