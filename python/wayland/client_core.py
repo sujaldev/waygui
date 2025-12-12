@@ -71,7 +71,7 @@ def request(func: Callable[P, R]) -> Callable[P, R]:
 
             if i < len(args) and not isinstance(args[i], wl_primitive_type):
                 args[i] = wl_primitive_type(getattr(args[i], "value", args[i]))
-            elif not isinstance((value := kwargs.get(arg_name, None)), wl_primitive_type):
+            elif i >= len(args) and not isinstance((value := kwargs.get(arg_name, None)), wl_primitive_type):
                 kwargs[arg_name] = wl_primitive_type(getattr(value, "value", value))
 
         ret = func(*args, **kwargs)
