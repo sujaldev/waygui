@@ -333,6 +333,7 @@ def main():
         format=1,  # xrgb8888
     )
     wl_buffer = objects[new_id]
+    wl_buffer.set_callback("release")
 
     # wl_surface::attach(buffer=wl_buffer, x=0, y=0)
     write_request(
@@ -347,6 +348,67 @@ def main():
 
     # noinspection PyUnresolvedReferences,PyProtectedMember
     flush([shm._fd])
+
+    from time import sleep
+    sleep(0.5)
+
+    global pool_data
+    pool_data[(POOL_SIZE // 2):POOL_SIZE] = b"\xFF\x00\x00\x00" * 500 * 500
+
+    # wl_shm_pool::create_buffer(new_id, offset=0, width=500, height=500, stride=500*4, format=xrgb8888)
+    write_request(
+        wl_shm_pool, "create_buffer",
+        id=(new_id := len(objects)),
+        offset=(POOL_SIZE // 2),
+        width=WIDTH,
+        height=HEIGHT,
+        stride=STRIDE,
+        format=1,  # xrgb8888
+    )
+    wl_buffer2 = objects[new_id]
+    wl_buffer2.set_callback("release")
+
+    # wl_surface::attach(buffer=wl_buffer, x=0, y=0)
+    write_request(
+        wl_surface, "attach",
+        buffer=wl_buffer2.obj_id.value,
+        x=0,
+        y=0
+    )
+
+    # wl_surface::damage()
+    write_request(
+        wl_surface, "damage",
+        x=100, y=100, width=200, height=200
+    )
+
+    # wl_surface::commit()
+    write_request(wl_surface, "commit")
+
+    flush()
+    sleep(0.00659)
+
+    pool_data[0:(POOL_SIZE // 2)] = b"\x00\xff\x00\x00" * 500 * 500
+
+    # wl_surface::attach(buffer=wl_buffer, x=0, y=0)
+    write_request(
+        wl_surface, "attach",
+        buffer=wl_buffer.obj_id.value,
+        x=0,
+        y=0
+    )
+
+    # wl_surface::damage()
+    write_request(
+        wl_surface, "damage",
+        x=300, y=300, width=500, height=500
+    )
+
+    # wl_surface::commit()
+    write_request(wl_surface, "commit")
+
+    flush()
+
 
     while RUNNING:
         flush()

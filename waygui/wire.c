@@ -9,6 +9,10 @@
 
 #include "helpers.h"
 
+struct Array {
+
+};
+
 int setup_socket(char *name) {
     int ret;
 

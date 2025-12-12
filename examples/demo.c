@@ -1,9 +1,11 @@
+#include <stdint.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <sys/socket.h>
 
-#include "wire.h"
+#include "waygui.h"
 
 int main(int argc, char *argv[]) {
-    close(setup_socket(NULL));
+    create_window();
     return 0;
 }
