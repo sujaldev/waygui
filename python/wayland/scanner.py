@@ -28,8 +28,13 @@ def generate_arg_type_annotation(type_: str) -> str:
     return f"{type_.__name__} | {first_param_annotation.__name__}"
 
 
-def generate_method_header(tag: Element, return_type: str = None) -> str:
-    header = f"def {tag.attrib['name']}(%s):"
+def generate_method_header(tag: Element, return_type: str = None, is_event: bool = False) -> str:
+    func_name = tag.attrib['name']
+    if is_event:
+        func_name = "on_" + func_name
+
+    header = f"def {func_name}(%s):"
+
     if return_type:
         header = "%s -> %s:" % (header.rstrip(":"), return_type)
 
@@ -70,6 +75,13 @@ def generate_request_method(tag: Element, opcode: int) -> str:
     return header + "\n" + textwrap.indent(body, " " * 4) + "\n\n"
 
 
+def generate_event_method(tag: Element) -> str:
+    header = generate_method_header(tag, is_event=True)
+    body = textwrap.indent("raise NotImplementedError", " " * 4)
+
+    return header + "\n" + body + "\n\n"
+
+
 def generate_interface(root_tag: Element) -> str:
     code = ""
 
@@ -79,7 +91,14 @@ def generate_interface(root_tag: Element) -> str:
 
         body_is_empty = True
 
-        events = [f'"{event_tag.attrib["name"]}"' for event_tag in interface_tag.iter("event")]
+        events = []
+
+        event_methods = ""
+        for event_tag in interface_tag.iter("event"):
+            events.append('"on_' + event_tag.attrib["name"] + '"')
+
+            event_methods += textwrap.indent(generate_event_method(event_tag), " " * 4)
+
         if events:
             body_is_empty = False
             events_str = ", ".join(events)
@@ -91,6 +110,8 @@ def generate_interface(root_tag: Element) -> str:
             code += textwrap.indent(
                 f"EVENTS = [{events_str}]", " " * 4
             ) + "\n\n"
+
+            code += event_methods
 
         request_code = ""
         for opcode, request_tag in enumerate(interface_tag.iter("request")):
