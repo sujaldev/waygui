@@ -3,7 +3,7 @@ import struct
 from dataclasses import dataclass, field
 from functools import partial
 from io import BytesIO
-from typing import Callable, Dict, List, Optional, Union
+from typing import Callable, Dict, Optional, Tuple
 from xml.etree import ElementTree
 
 
@@ -98,7 +98,7 @@ class Header:
 @dataclass
 class Message:
     header: Header
-    args: list[WLPrimitive]
+    args: Tuple[WLPrimitive, ...]
 
     def serialize_payload(self) -> bytes:
         payload = bytes()
