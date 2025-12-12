@@ -1,13 +1,16 @@
 import functools
 import inspect
-import sys
 import struct
+import sys
 from dataclasses import dataclass, field
 from functools import partial
 from io import BytesIO
-from typing import Callable, Dict, Optional, ParamSpec, Tuple, TypeVar
+from typing import Callable, ClassVar, Dict, List, Optional, ParamSpec, Tuple, TypeVar, TYPE_CHECKING
 
-from primitives import *
+if TYPE_CHECKING:
+    from . import ConnectionManager
+
+from .primitives import *
 
 __all__ = [
     "WLObject", "request", "Header", "Message"
@@ -20,8 +23,11 @@ R = TypeVar("R")
 @dataclass
 class WLObject:
     obj_id: ObjID | int
+    connection: "ConnectionManager"
     # indices in this list are used to match events to callbacks
     callbacks: Optional[Dict[int, Callable]] = field(default_factory=lambda: {})
+
+    EVENTS: ClassVar[List[str]] = []
 
     def __post_init__(self):
         if isinstance(self.obj_id, int):
@@ -37,10 +43,10 @@ class WLObject:
 
     def serialize_request(self, opcode: int, *args: WLPrimitive):
         header = Header(self.obj_id, opcode)
-        return Message(header, args[1:]).serialize()
+        return Message(header, args).serialize()
 
     def __repr__(self):
-        return f"{self.__name__}({self.obj_id.value})"
+        return f"{type(self).__name__}({self.obj_id.value})"
 
 
 def request(func: Callable[P, R]) -> Callable[P, R]:
@@ -62,7 +68,11 @@ def request(func: Callable[P, R]) -> Callable[P, R]:
             elif isinstance((value := kwargs.get(arg_name, "")), constructor_type):
                 kwargs[arg_name] = wl_primitive_type(value)
 
-        return func(*args, **kwargs)
+        ret = func(*args, **kwargs)
+        self = args[0]
+        # noinspection PyProtectedMember
+        self.connection._send_buffer += ret
+        return ret
 
     return wrapper
 
