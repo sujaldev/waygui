@@ -17,11 +17,30 @@ RUNNING = True
 shm: Optional[SharedMemory] = None
 pool_data: Optional[mmap.mmap] = None
 
-registry: Dict[str, Dict[str, int]] = {}
+
+class Display(WlDisplay):
+    pass
+
+
+class Registry(WlRegistry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        self.registry: Dict[str, Dict[str, int]] = {}
+
+    def on_global(self, name: UInt32 | int, interface: String | str, version: UInt32 | int):
+        self.registry[interface.value] = {
+            "numeric_name": name.value,
+            "version": version.value
+        }
 
 
 def main(conn: ConnectionManager):
-    pass
+    wl_display = conn.create_object(Display)
+    wl_registry = conn.create_object(Registry)
+    wl_display.get_registry(wl_registry.obj_id)
+    conn.flush()
+    print(wl_registry.registry)
 
 
 if __name__ == "__main__":
