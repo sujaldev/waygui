@@ -40,8 +40,11 @@ class WlRegistry(WLObject):
         )
 
     @request
-    def bind(self, name: UInt32 | int, id_: NewID | int) -> bytes:
-        return self.serialize_request(0, name, id_)
+    def bind(
+            self, name: UInt32 | int, new_interface_name: String | str, new_interface_version: UInt32 | int,
+            id_: NewID | int
+    ) -> bytes:
+        return self.serialize_request(0, name, new_interface_name, new_interface_version, id_)
 
 
 class WlCallback(WLObject):

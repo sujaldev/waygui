@@ -26,7 +26,23 @@ def generate_arg_type_annotation(type_: str) -> str:
     type_ = ARG_MAP[type_]
     constructor_signature = list(inspect.signature(type_.__init__).parameters.values())
     first_param_annotation = constructor_signature[1].annotation
-    return f"{type_.__name__} | {first_param_annotation.__name__}"
+    return f": {type_.__name__} | {first_param_annotation.__name__}"
+
+
+def generate_method_signature(tag: Element, annotate: bool = True) -> List[str]:
+    signature = []
+
+    for arg_tag in tag.iter("arg"):
+        if arg_tag.attrib["type"] == "new_id" and arg_tag.attrib.get("interface", None) is None:
+            signature.append(f"new_interface_name" + (": String | str" if annotate else ""))
+            signature.append(f"new_interface_version" + (": UInt32 | int" if annotate else ""))
+        signature.append(
+            arg_tag.attrib["name"] +
+            ("_" if arg_tag.attrib["name"] in CONFLICTING_BUILTIN_NAMES else "") +
+            (generate_arg_type_annotation(arg_tag.attrib["type"]) if annotate else "")
+        )
+
+    return signature
 
 
 def generate_method_header(tag: Element, return_type: str = None, is_event: bool = False) -> str:
@@ -39,14 +55,8 @@ def generate_method_header(tag: Element, return_type: str = None, is_event: bool
     if return_type:
         header = "%s -> %s:" % (header.rstrip(":"), return_type)
 
-    signature = [
-        arg_tag.attrib["name"] +
-        (": " if arg_tag.attrib["name"] not in CONFLICTING_BUILTIN_NAMES else "_: ") +
-        generate_arg_type_annotation(arg_tag.attrib["type"])
-        for arg_tag in tag.iter("arg")
-    ]
+    signature = generate_method_signature(tag)
     signature.insert(0, "self")
-
     signature_str = ", ".join(signature)
 
     if (4 + len(header) - 2 + len(signature_str)) > MAX_TEXT_WIDTH:
@@ -57,11 +67,7 @@ def generate_method_header(tag: Element, return_type: str = None, is_event: bool
 
 def generate_request_method(tag: Element, opcode: int) -> str:
     header = generate_method_header(tag, "bytes")
-    signature = [
-        (name := arg_tag.attrib["name"]) +
-        ("_" if name in CONFLICTING_BUILTIN_NAMES else "")
-        for arg_tag in tag.iter("arg")
-    ]
+    signature = generate_method_signature(tag, annotate=False)
     signature.insert(0, str(opcode))
 
     signature_str = ", ".join(signature)
