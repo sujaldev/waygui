@@ -3,7 +3,7 @@ from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, Optional
 
 from wayland import ConnectionManager
-from wayland.protocol import *
+from wayland.protocols.wayland import *
 
 WIDTH, HEIGHT = 500, 500
 MAX_WIDTH, MAX_HEIGHT = 0, 0

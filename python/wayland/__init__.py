@@ -5,7 +5,7 @@ from io import BytesIO
 from typing import Iterable, List, Optional, Type, TypeVar
 
 from .client_core import *
-from .protocol import WlDisplay
+from .protocols.wayland import WlDisplay
 
 __all__ = [
     "ConnectionManager"
