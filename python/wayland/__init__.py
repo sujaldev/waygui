@@ -5,7 +5,6 @@ from io import BytesIO
 from typing import Iterable, List, Optional, Type, TypeVar
 
 from .client_core import *
-from .protocols.wayland import WlDisplay
 
 __all__ = [
     "ConnectionManager"
@@ -18,7 +17,6 @@ class ConnectionManager:
     def __init__(self, name: str = None):
         self.objects: List[Optional["WLObject"]] = [
             None,  # Object 0 -> null object
-            WlDisplay(1, self)  # Object 1 -> wl_display
         ]
 
         self._sock: Optional[socket.socket] = None
@@ -26,11 +24,6 @@ class ConnectionManager:
         self._recv_buffer = BytesIO()
 
         self.setup_socket(name)
-
-    @property
-    def wl_display(self) -> "WlDisplay":
-        # noinspection PyTypeChecker
-        return self.objects[1]
 
     def setup_socket(self, name: str = None):
         self._sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
