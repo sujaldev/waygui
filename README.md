@@ -5,6 +5,6 @@ window and allow the user to draw their own pixels.
 
 ## Prototype
 
-This window was created by `python/wire.py`:
+This window was created by `python/client.py`:
 
 ![prototype demo with checker board pattern](./demo.png)

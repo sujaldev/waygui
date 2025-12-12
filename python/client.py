@@ -7,7 +7,7 @@ from io import BytesIO
 from multiprocessing.shared_memory import SharedMemory
 from typing import Dict, Iterable, Optional
 
-import wl_util as wl
+import client_core as wl
 
 WIDTH, HEIGHT = 500, 500
 MAX_WIDTH, MAX_HEIGHT = 0, 0
