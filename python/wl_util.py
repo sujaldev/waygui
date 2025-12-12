@@ -118,6 +118,25 @@ class Array(WLPrimitive):
 
 
 @dataclass
+class Fixed(WLPrimitive):
+    """
+    Signed 24.8 decimal numbers. It is a signed decimal type
+    which offers a sign bit, 23 bits of integer precision and
+    8 bits of decimal precision. This is exposed as an opaque
+    struct with conversion helpers to and from double and int
+    on the C API side.
+    """
+    value: float
+
+    @staticmethod
+    def frombytes(data: BytesIO) -> "WLPrimitive":
+        raise NotImplementedError
+
+    def serialize(self) -> bytes:
+        raise NotImplementedError
+
+
+@dataclass
 class WLObject:
     obj_id: ObjID
     name: str
