@@ -1,17 +1,20 @@
+import functools
+import inspect
 import sys
 import struct
 from dataclasses import dataclass, field
 from functools import partial
 from io import BytesIO
-from typing import Callable, Dict, Optional, Tuple
-from xml.etree import ElementTree
+from typing import Callable, Dict, Optional, ParamSpec, Tuple, TypeVar
 
+from primitives import *
 
-def padding(size: int) -> int:
-    return (4 - (size % 4)) % 4
+__all__ = [
+    "WLObject", "request", "Header", "Message"
+]
 
-
-
+P = ParamSpec("P")
+R = TypeVar("R")
 
 
 @dataclass
@@ -32,39 +35,36 @@ class WLObject:
             func = partial(self.default_callback, event)
         self.callbacks[self.interface.events[event].opcode] = func
 
+    def serialize_request(self, opcode: int, *args: WLPrimitive):
+        header = Header(self.obj_id, opcode)
+        return Message(header, args[1:]).serialize()
+
     def __repr__(self):
-        return f"WLObject({self.obj_id.value}, {self.name})"
+        return f"{self.__name__}({self.obj_id.value})"
 
 
-@dataclass
-class WLInterface:
-    name: str
-    version: int
-    requests: Dict[Union[str, int], "WLFuncs"]
-    events: Dict[Union[str, int], "WLFuncs"]
+def request(func: Callable[P, R]) -> Callable[P, R]:
+    # Decorator that converts arguments passed to a method from python types to wayland primitive types (WLPrimitive).
 
+    @functools.wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs):
+        args = list(args)
+        signature = inspect.signature(func).parameters
 
-@dataclass
-class WLFuncs:
-    opcode: int
-    name: str
-    args: List["WLArgument"]
-    type_: str = None
+        for i, (arg_name, arg_type) in enumerate(signature.items()):
+            if arg_name == "self":
+                continue
 
+            wl_primitive_type, constructor_type = signature[arg_name].annotation.__args__
 
-class WLRequest(WLFuncs):
-    pass
+            if i < len(args) and isinstance(args[i], constructor_type):
+                args[i] = wl_primitive_type(args[i])
+            elif isinstance((value := kwargs.get(arg_name, "")), constructor_type):
+                kwargs[arg_name] = wl_primitive_type(value)
 
+        return func(*args, **kwargs)
 
-class WLEvent(WLFuncs):
-    pass
-
-
-@dataclass
-class WLArgument:
-    name: str
-    type_: type[WLPrimitive]
-    new_interface: Optional[str] = None
+    return wrapper
 
 
 @dataclass
@@ -111,77 +111,3 @@ class Message:
         payload = self.serialize_payload()
         self.header.size = 8 + len(payload)
         return self.header.serialize() + payload
-
-
-def build_interface(path="/usr/share/wayland/wayland.xml"):
-    xml = ElementTree.parse(path)
-
-    interface = {}
-    arg_map = {
-        "int": Int32,
-        "uint": UInt32,
-        "fixed": "fixed",
-        "object": ObjID,
-        "new_id": NewID,
-        "string": String,
-        "fd": Fd,
-        "array": Array,
-    }
-
-    for interface_tag in xml.getroot().iter("interface"):
-        name = interface_tag.attrib["name"]
-        interface_obj = WLInterface(
-            name,
-            int(interface_tag.attrib["version"]),
-            {}, {}
-        )
-
-        for opcode, request_tag in enumerate(interface_tag.iter("request")):
-            request_obj = WLRequest(
-                opcode,
-                (req_name := request_tag.attrib["name"]),
-                [],
-                type_=request_tag.attrib.get("type", None),
-            )
-
-            for arg_tag in request_tag.iter("arg"):
-                # noinspection PyTypeChecker
-                arg_obj = WLArgument(
-                    arg_tag.attrib["name"],
-                    arg_map[arg_tag.attrib["type"]],
-                    arg_tag.attrib.get("interface", None)
-                )
-
-                if arg_obj.type_ == NewID and arg_obj.new_interface is None:
-                    request_obj.args.append(WLArgument("new_interface_name", String))
-                    request_obj.args.append(WLArgument("new_interface_version", UInt32))
-
-                request_obj.args.append(arg_obj)
-
-            interface_obj.requests[req_name] = request_obj
-            interface_obj.requests[opcode] = request_obj
-
-        for opcode, event_tag in enumerate(interface_tag.iter("event")):
-            event_obj = WLEvent(
-                opcode,
-                (event_name := event_tag.attrib["name"]),
-                [],
-                type_=event_tag.attrib.get("type", None)
-            )
-
-            for arg_tag in event_tag.iter("arg"):
-                # noinspection PyTypeChecker
-                arg_obj = WLArgument(
-                    arg_tag.attrib["name"],
-                    arg_map[arg_tag.attrib["type"]],
-                    arg_tag.attrib.get("interface", None)
-                )
-
-                event_obj.args.append(arg_obj)
-
-            interface_obj.events[event_name] = event_obj
-            interface_obj.events[opcode] = event_obj
-
-        interface[name] = interface_obj
-
-    return interface
