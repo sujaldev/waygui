@@ -13,13 +13,16 @@ def padding(size: int) -> int:
 
 
 
+
 @dataclass
 class WLObject:
-    obj_id: ObjID
-    name: str
-    interface: "WLInterface"
+    obj_id: ObjID | int
     # indices in this list are used to match events to callbacks
     callbacks: Optional[Dict[int, Callable]] = field(default_factory=lambda: {})
+
+    def __post_init__(self):
+        if isinstance(self.obj_id, int):
+            self.obj_id = ObjID(self.obj_id)
 
     def default_callback(self, event_name: str, **kwargs):
         print(f"{self.name}::{event_name} -> {kwargs}")
