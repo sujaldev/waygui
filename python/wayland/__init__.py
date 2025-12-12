@@ -58,13 +58,10 @@ class ConnectionManager:
         obj = self.objects[header.obj_id.value]
 
         try:
-            event_name = obj.EVENTS[header.opcode]
-            obj.callbacks[event_name](self._recv_buffer.read(header.size - 8))
+            obj.deserialize_event(header)
         except KeyError:
-            # noinspection PyTypeHints
-            missing_callback_name = obj.EVENTS[header.opcode]
             raise Exception(
-                f"Missing {missing_callback_name!r} callback for object {type(obj).__name__!r}"
+                f"Invalid opcode: {header.opcode} for object {type(obj).__name__!r}"
             )
 
     def flush(self, fds: Iterable = None):

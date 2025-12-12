@@ -36,10 +36,16 @@ class WLObject:
     def default_callback(self, event_name: str, *args, **kwargs):
         print(f"{type(self).__name__}::{event_name} -> args: {args}, kwargs: {kwargs}")
 
-    def set_callback(self, event: str, func: Callable = None):
-        if func is None:
-            func = partial(self.default_callback, event)
-        self.callbacks[event] = partial(func, event)
+    def deserialize_event(self, header: Header) -> None:
+        event_name = self.EVENTS[header.opcode]
+        callback = getattr(self, event_name)
+        signature = list(inspect.signature(callback).parameters.values())
+
+        kwargs = {}
+        for arg in signature:
+            kwargs[arg.name] = arg.annotation.__args__[0].frombytes(self.connection._recv_buffer)
+
+        callback(**kwargs)
 
     def serialize_request(self, opcode: int, *args: WLPrimitive):
         header = Header(self.obj_id, opcode)
