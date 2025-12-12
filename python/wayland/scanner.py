@@ -76,9 +76,12 @@ def generate_request_method(tag: Element, opcode: int) -> str:
     return header + "\n" + textwrap.indent(body, " " * 4) + "\n\n"
 
 
-def generate_event_method(tag: Element) -> str:
+def generate_event_method(tag: Element, parent_tag: Element) -> str:
     header = generate_method_header(tag, is_event=True)
-    body = textwrap.indent("raise NotImplementedError", " " * 4)
+    err_msg = "f\"'{type(self).__name__}' does not implement callback for event " + \
+              f"'{parent_tag.attrib['name']}::{tag.attrib['name']}'\""
+    err_msg = textwrap.indent(err_msg, " " * 4)
+    body = textwrap.indent(f'raise NotImplementedError(\n{err_msg}\n)', " " * 4)
 
     return header + "\n" + body + "\n\n"
 
@@ -99,7 +102,7 @@ def generate_interface(root_tag: Element) -> Tuple[str, str]:
         for event_tag in interface_tag.iter("event"):
             events.append('"on_' + event_tag.attrib["name"] + '"')
 
-            event_methods += textwrap.indent(generate_event_method(event_tag), " " * 4)
+            event_methods += textwrap.indent(generate_event_method(event_tag, interface_tag), " " * 4)
 
         if events:
             body_is_empty = False

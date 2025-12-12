@@ -8,7 +8,9 @@ class XdgWmBase(WLObject):
     EVENTS = ["on_ping"]
 
     def on_ping(self, serial: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_wm_base::ping'"
+        )
 
     @request
     def destroy(self) -> bytes:
@@ -73,7 +75,9 @@ class XdgSurface(WLObject):
     EVENTS = ["on_configure"]
 
     def on_configure(self, serial: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_surface::configure'"
+        )
 
     @request
     def destroy(self) -> bytes:
@@ -100,16 +104,24 @@ class XdgToplevel(WLObject):
     EVENTS = ["on_configure", "on_close", "on_configure_bounds", "on_wm_capabilities"]
 
     def on_configure(self, width: Int32 | int, height: Int32 | int, states: Array | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_toplevel::configure'"
+        )
 
     def on_close(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_toplevel::close'"
+        )
 
     def on_configure_bounds(self, width: Int32 | int, height: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_toplevel::configure_bounds'"
+        )
 
     def on_wm_capabilities(self, capabilities: Array | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_toplevel::wm_capabilities'"
+        )
 
     @request
     def destroy(self) -> bytes:
@@ -172,13 +184,19 @@ class XdgPopup(WLObject):
     EVENTS = ["on_configure", "on_popup_done", "on_repositioned"]
 
     def on_configure(self, x: Int32 | int, y: Int32 | int, width: Int32 | int, height: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_popup::configure'"
+        )
 
     def on_popup_done(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_popup::popup_done'"
+        )
 
     def on_repositioned(self, token: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'xdg_popup::repositioned'"
+        )
 
     @request
     def destroy(self) -> bytes:

@@ -8,10 +8,14 @@ class WlDisplay(WLObject):
     EVENTS = ["on_error", "on_delete_id"]
 
     def on_error(self, object_id: ObjID | int, code: UInt32 | int, message: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_display::error'"
+        )
 
     def on_delete_id(self, id_: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_display::delete_id'"
+        )
 
     @request
     def sync(self, callback: NewID | int) -> bytes:
@@ -26,10 +30,14 @@ class WlRegistry(WLObject):
     EVENTS = ["on_global", "on_global_remove"]
 
     def on_global(self, name: UInt32 | int, interface: String | str, version: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_registry::global'"
+        )
 
     def on_global_remove(self, name: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_registry::global_remove'"
+        )
 
     @request
     def bind(self, name: UInt32 | int, id_: NewID | int) -> bytes:
@@ -40,7 +48,9 @@ class WlCallback(WLObject):
     EVENTS = ["on_done"]
 
     def on_done(self, callback_data: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_callback::done'"
+        )
 
 
 class WlCompositor(WLObject):
@@ -74,7 +84,9 @@ class WlShm(WLObject):
     EVENTS = ["on_format"]
 
     def on_format(self, format_: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_shm::format'"
+        )
 
     @request
     def create_pool(self, id_: NewID | int, fd: Fd | int, size: Int32 | int) -> bytes:
@@ -89,7 +101,9 @@ class WlBuffer(WLObject):
     EVENTS = ["on_release"]
 
     def on_release(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_buffer::release'"
+        )
 
     @request
     def destroy(self) -> bytes:
@@ -100,13 +114,19 @@ class WlDataOffer(WLObject):
     EVENTS = ["on_offer", "on_source_actions", "on_action"]
 
     def on_offer(self, mime_type: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_offer::offer'"
+        )
 
     def on_source_actions(self, source_actions: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_offer::source_actions'"
+        )
 
     def on_action(self, dnd_action: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_offer::action'"
+        )
 
     @request
     def accept(self, serial: UInt32 | int, mime_type: String | str) -> bytes:
@@ -133,22 +153,34 @@ class WlDataSource(WLObject):
     EVENTS = ["on_target", "on_send", "on_cancelled", "on_dnd_drop_performed", "on_dnd_finished", "on_action"]
 
     def on_target(self, mime_type: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::target'"
+        )
 
     def on_send(self, mime_type: String | str, fd: Fd | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::send'"
+        )
 
     def on_cancelled(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::cancelled'"
+        )
 
     def on_dnd_drop_performed(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::dnd_drop_performed'"
+        )
 
     def on_dnd_finished(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::dnd_finished'"
+        )
 
     def on_action(self, dnd_action: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_source::action'"
+        )
 
     @request
     def offer(self, mime_type: String | str) -> bytes:
@@ -167,24 +199,36 @@ class WlDataDevice(WLObject):
     EVENTS = ["on_data_offer", "on_enter", "on_leave", "on_motion", "on_drop", "on_selection"]
 
     def on_data_offer(self, id_: NewID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::data_offer'"
+        )
 
     def on_enter(
             self, serial: UInt32 | int, surface: ObjID | int, x: Fixed | float, y: Fixed | float, id_: ObjID | int
     ):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::enter'"
+        )
 
     def on_leave(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::leave'"
+        )
 
     def on_motion(self, time: UInt32 | int, x: Fixed | float, y: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::motion'"
+        )
 
     def on_drop(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::drop'"
+        )
 
     def on_selection(self, id_: ObjID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_data_device::selection'"
+        )
 
     @request
     def start_drag(self, source: ObjID | int, origin: ObjID | int, icon: ObjID | int, serial: UInt32 | int) -> bytes:
@@ -219,13 +263,19 @@ class WlShellSurface(WLObject):
     EVENTS = ["on_ping", "on_configure", "on_popup_done"]
 
     def on_ping(self, serial: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_shell_surface::ping'"
+        )
 
     def on_configure(self, edges: UInt32 | int, width: Int32 | int, height: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_shell_surface::configure'"
+        )
 
     def on_popup_done(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_shell_surface::popup_done'"
+        )
 
     @request
     def pong(self, serial: UInt32 | int) -> bytes:
@@ -275,16 +325,24 @@ class WlSurface(WLObject):
     EVENTS = ["on_enter", "on_leave", "on_preferred_buffer_scale", "on_preferred_buffer_transform"]
 
     def on_enter(self, output: ObjID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_surface::enter'"
+        )
 
     def on_leave(self, output: ObjID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_surface::leave'"
+        )
 
     def on_preferred_buffer_scale(self, factor: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_surface::preferred_buffer_scale'"
+        )
 
     def on_preferred_buffer_transform(self, transform: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_surface::preferred_buffer_transform'"
+        )
 
     @request
     def destroy(self) -> bytes:
@@ -335,10 +393,14 @@ class WlSeat(WLObject):
     EVENTS = ["on_capabilities", "on_name"]
 
     def on_capabilities(self, capabilities: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_seat::capabilities'"
+        )
 
     def on_name(self, name: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_seat::name'"
+        )
 
     @request
     def get_pointer(self, id_: NewID | int) -> bytes:
@@ -364,37 +426,59 @@ class WlPointer(WLObject):
     ]
 
     def on_enter(self, serial: UInt32 | int, surface: ObjID | int, surface_x: Fixed | float, surface_y: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::enter'"
+        )
 
     def on_leave(self, serial: UInt32 | int, surface: ObjID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::leave'"
+        )
 
     def on_motion(self, time: UInt32 | int, surface_x: Fixed | float, surface_y: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::motion'"
+        )
 
     def on_button(self, serial: UInt32 | int, time: UInt32 | int, button: UInt32 | int, state: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::button'"
+        )
 
     def on_axis(self, time: UInt32 | int, axis: UInt32 | int, value: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis'"
+        )
 
     def on_frame(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::frame'"
+        )
 
     def on_axis_source(self, axis_source: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis_source'"
+        )
 
     def on_axis_stop(self, time: UInt32 | int, axis: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis_stop'"
+        )
 
     def on_axis_discrete(self, axis: UInt32 | int, discrete: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis_discrete'"
+        )
 
     def on_axis_value120(self, axis: UInt32 | int, value120: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis_value120'"
+        )
 
     def on_axis_relative_direction(self, axis: UInt32 | int, direction: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_pointer::axis_relative_direction'"
+        )
 
     @request
     def set_cursor(
@@ -411,25 +495,37 @@ class WlKeyboard(WLObject):
     EVENTS = ["on_keymap", "on_enter", "on_leave", "on_key", "on_modifiers", "on_repeat_info"]
 
     def on_keymap(self, format_: UInt32 | int, fd: Fd | int, size: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::keymap'"
+        )
 
     def on_enter(self, serial: UInt32 | int, surface: ObjID | int, keys: Array | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::enter'"
+        )
 
     def on_leave(self, serial: UInt32 | int, surface: ObjID | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::leave'"
+        )
 
     def on_key(self, serial: UInt32 | int, time: UInt32 | int, key: UInt32 | int, state: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::key'"
+        )
 
     def on_modifiers(
             self, serial: UInt32 | int, mods_depressed: UInt32 | int, mods_latched: UInt32 | int,
             mods_locked: UInt32 | int, group: UInt32 | int
     ):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::modifiers'"
+        )
 
     def on_repeat_info(self, rate: Int32 | int, delay: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_keyboard::repeat_info'"
+        )
 
     @request
     def release(self) -> bytes:
@@ -443,25 +539,39 @@ class WlTouch(WLObject):
             self, serial: UInt32 | int, time: UInt32 | int, surface: ObjID | int, id_: Int32 | int, x: Fixed | float,
             y: Fixed | float
     ):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::down'"
+        )
 
     def on_up(self, serial: UInt32 | int, time: UInt32 | int, id_: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::up'"
+        )
 
     def on_motion(self, time: UInt32 | int, id_: Int32 | int, x: Fixed | float, y: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::motion'"
+        )
 
     def on_frame(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::frame'"
+        )
 
     def on_cancel(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::cancel'"
+        )
 
     def on_shape(self, id_: Int32 | int, major: Fixed | float, minor: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::shape'"
+        )
 
     def on_orientation(self, id_: Int32 | int, orientation: Fixed | float):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_touch::orientation'"
+        )
 
     @request
     def release(self) -> bytes:
@@ -475,22 +585,34 @@ class WlOutput(WLObject):
             self, x: Int32 | int, y: Int32 | int, physical_width: Int32 | int, physical_height: Int32 | int,
             subpixel: Int32 | int, make: String | str, model: String | str, transform: Int32 | int
     ):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::geometry'"
+        )
 
     def on_mode(self, flags: UInt32 | int, width: Int32 | int, height: Int32 | int, refresh: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::mode'"
+        )
 
     def on_done(self):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::done'"
+        )
 
     def on_scale(self, factor: Int32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::scale'"
+        )
 
     def on_name(self, name: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::name'"
+        )
 
     def on_description(self, description: String | str):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'wl_output::description'"
+        )
 
     @request
     def release(self) -> bytes:

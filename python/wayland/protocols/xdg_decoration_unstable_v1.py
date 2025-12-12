@@ -18,7 +18,9 @@ class ZxdgToplevelDecorationV1(WLObject):
     EVENTS = ["on_configure"]
 
     def on_configure(self, mode: UInt32 | int):
-        raise NotImplementedError
+        raise NotImplementedError(
+            f"'{type(self).__name__}' does not implement callback for event 'zxdg_toplevel_decoration_v1::configure'"
+        )
 
     @request
     def destroy(self) -> bytes:
