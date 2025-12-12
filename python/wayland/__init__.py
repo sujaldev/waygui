@@ -58,7 +58,8 @@ class ConnectionManager:
         obj = self.objects[header.obj_id.value]
 
         try:
-            obj.callbacks[header.opcode](self._recv_buffer.read(header.size))
+            event_name = obj.EVENTS[header.opcode]
+            obj.callbacks[event_name](self._recv_buffer.read(header.size - 8))
         except KeyError:
             # noinspection PyTypeHints
             missing_callback_name = obj.EVENTS[header.opcode]

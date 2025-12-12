@@ -25,7 +25,7 @@ class WLObject:
     obj_id: ObjID | int
     connection: "ConnectionManager"
     # indices in this list are used to match events to callbacks
-    callbacks: Optional[Dict[int, Callable]] = field(default_factory=lambda: {})
+    callbacks: Optional[Dict[str, Callable]] = field(default_factory=lambda: {})
 
     EVENTS: ClassVar[List[str]] = []
 
@@ -33,13 +33,13 @@ class WLObject:
         if isinstance(self.obj_id, int):
             self.obj_id = ObjID(self.obj_id)
 
-    def default_callback(self, event_name: str, **kwargs):
-        print(f"{self.name}::{event_name} -> {kwargs}")
+    def default_callback(self, event_name: str, *args, **kwargs):
+        print(f"{type(self).__name__}::{event_name} -> args: {args}, kwargs: {kwargs}")
 
     def set_callback(self, event: str, func: Callable = None):
         if func is None:
             func = partial(self.default_callback, event)
-        self.callbacks[self.interface.events[event].opcode] = func
+        self.callbacks[event] = partial(func, event)
 
     def serialize_request(self, opcode: int, *args: WLPrimitive):
         header = Header(self.obj_id, opcode)
