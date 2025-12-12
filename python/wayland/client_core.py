@@ -63,10 +63,10 @@ def request(func: Callable[P, R]) -> Callable[P, R]:
 
             wl_primitive_type, constructor_type = signature[arg_name].annotation.__args__
 
-            if i < len(args) and isinstance(args[i], constructor_type):
-                args[i] = wl_primitive_type(args[i])
-            elif isinstance((value := kwargs.get(arg_name, "")), constructor_type):
-                kwargs[arg_name] = wl_primitive_type(value)
+            if i < len(args) and not isinstance(args[i], wl_primitive_type):
+                args[i] = wl_primitive_type(getattr(args[i], "value", args[i]))
+            elif not isinstance((value := kwargs.get(arg_name, None)), wl_primitive_type):
+                kwargs[arg_name] = wl_primitive_type(getattr(value, "value", value))
 
         ret = func(*args, **kwargs)
         self = args[0]
